@@ -6,7 +6,7 @@
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
-        std::cerr << "Usage: ./csv_eval file.csv\n";
+        std::cerr << "Usage: ./csvreader file.csv\n";
         return 1;
     }
 
@@ -15,11 +15,10 @@ int main(int argc, char* argv[]) {
     auto table = load_csv(filename);
 
     std::ostringstream errors;
-    evaluate_table(table, errors);
 
-    std::string errs = errors.str();
-    if (!errs.empty()) {
-        std::cerr << "Errors during evaluation:\n" << errs;
+    if (!evaluate_table(table, errors)) {
+        std::cerr << "Error during evaluation: " << errors.str() << std::endl;
+        return 1;
     }
 
     print_table(table);

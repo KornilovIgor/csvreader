@@ -25,7 +25,7 @@ bool to_int(const std::string& s, int &result) {
     }
 }
 
-bool evaluate_cell(Table& table, int row, int column, std::unordered_set<std::string>& visited, std::ostream& err, int &result);
+bool evaluate_cell(Table& table, int row, int column, std::unordered_set<std::string>& visited, std::ostream& err, int &result, bool& error);
 
 bool parse_expression(const std::string& expr, std::string& arg1, char& op, std::string& arg2) {
     std::regex pattern(R"(^=([A-Za-z]+\d+|\d+)([+*/-])([A-Za-z]+\d+|\d+)$)");
@@ -44,7 +44,7 @@ bool parse_expression(const std::string& expr, std::string& arg1, char& op, std:
 
 bool evaluate_argument(const std::string& arg, Table& table,
     const std::vector<std::string>& header, std::unordered_set<std::string>& visited,
-    std::ostream& err, int& result) {
+    std::ostream& err, bool& error, int& result) {
 
     if (to_int(arg, result)) {
         return true;
@@ -71,13 +71,13 @@ bool evaluate_argument(const std::string& arg, Table& table,
     for (size_t r = 1; r < table.size(); ++r) {
         int row_header;
         if (to_int(table[r][0], row_header) && row_header == row_num) {
-            return evaluate_cell(table, r, column_index, visited, err, result);
+            return evaluate_cell(table, r, column_index, visited, err, result, error);
         }
     }
     return false;
 }
 
-bool evaluate_cell(Table& table, int row, int column, std::unordered_set<std::string>& visited, std::ostream& err, int& result) {
+bool evaluate_cell(Table& table, int row, int column, std::unordered_set<std::string>& visited, std::ostream& err, int& result, bool& error) {
 
     std::string& cell = table[row][column];
 
@@ -87,7 +87,8 @@ bool evaluate_cell(Table& table, int row, int column, std::unordered_set<std::st
 
     std::string key = std::to_string(row) + "_" +std::to_string(column);
     if (visited.count(key)) {
-        err << "Cycle detected at cell (" << table[row][0] << "," << table[0][column] << ")" << std::endl;
+        err << "Cycle detected at cell: " << table[0][column] << table[row][0] << std::endl;
+        error = true;
         return false;
     }
     visited.insert(key);
@@ -101,13 +102,17 @@ bool evaluate_cell(Table& table, int row, int column, std::unordered_set<std::st
     }
 
     int left, right;
-    if (!evaluate_argument(arg1, table, table[0], visited, err, left)) {
-        err << "Invalid arg1: " << arg1 << std::endl;
+    if (!evaluate_argument(arg1, table, table[0], visited, err, error, left)) {
+        if (!error) {
+            err << "Invalid arg1: " << arg1 << std::endl;
+        }
         return false;
     }
 
-    if (!evaluate_argument(arg2, table, table[0], visited, err, right)) {
-        err << "Invalid arg2: " << arg2 << std::endl;
+    if (!evaluate_argument(arg2, table, table[0], visited, err, error, right)) {
+        if (!error) {
+            err << "Invalid arg2: " << arg2 << std::endl;
+        }
         return false;
     }
 
@@ -139,11 +144,16 @@ bool evaluate_cell(Table& table, int row, int column, std::unordered_set<std::st
 }
 
 bool evaluate_table(Table& table, std::ostream& err_stream) {
+    bool error = false;
     for (size_t row = 1; row < table.size(); ++row) {
         for (size_t column = 1; column < table[row].size(); ++column) {
             int result;
             std::unordered_set<std::string> visited;
-            evaluate_cell(table, row, column, visited, err_stream, result);
+
+            if (!evaluate_cell(table, row, column, visited, err_stream, result, error)) {
+                return false;
+            }
+
         }
     }
     return true;
