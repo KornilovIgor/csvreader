@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED 17)
 
 include_directories(include)
 
-add_executable(csvreader src/main.cpp src/csv_parser.cpp)
+add_executable(csvreader src/main.cpp src/csv_parser.cpp src/evaluator.cpp)
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/test/CMakeLists.txt")
     enable_testing()
