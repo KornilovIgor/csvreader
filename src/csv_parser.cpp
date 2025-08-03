@@ -4,6 +4,7 @@
 #include <sstream>
 #include <iostream>
 #include <regex>
+#include <set>
 
 static bool is_valid_column_name(const std::string& column_name) {
     for (char ch : column_name) {
@@ -25,6 +26,7 @@ bool parse_csv(const std::string& filename, Table& table, std::ostream& err_msg 
 
     std::string line;
     size_t num_columns = 0;
+    std::set<std::string> unique_row_ids;
 
     while (std::getline(file, line)) {
         std::vector<std::string> row;
@@ -38,15 +40,31 @@ bool parse_csv(const std::string& filename, Table& table, std::ostream& err_msg 
 
         if (table.empty()) {
             num_columns = row.size();
+
             for (size_t i = 1; i < num_columns; ++i) {
                 if (!is_valid_column_name(row[i])) {
                     err_msg << "Error: Invalid column name: " << row[i] << std::endl;
                     return false;
                 }
+                for (size_t j = 1; j < i; ++j) {
+                    if (row[i] == row[j]) {
+                        err_msg << "Error: Duplicate column name: " << row[i] << std::endl;
+                        return false;
+                    }
+                }
+
             }
         } else if (row.size() != num_columns) {
             err_msg << "Error: Inconsistent number of columns in row " << line << std::endl;
             return false;
+        }
+
+        if (!table.empty()) {  // Пропускаем заголовок
+            const std::string& row_id = row[0];
+            if (!unique_row_ids.insert(row_id).second) {
+                err_msg << "Error: Duplicate row ID: " << row_id << std::endl;
+                return false;
+            }
         }
 
         table.push_back(row);
