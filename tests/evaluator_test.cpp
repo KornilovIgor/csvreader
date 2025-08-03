@@ -33,3 +33,18 @@ TEST(EvaluatorTest, DivisionByZero) {
     EXPECT_FALSE(ok);
     EXPECT_NE(err.str().find("Division by zero"), std::string::npos);
 }
+
+TEST(EvaluatorTest, InvalidCellAddress) {
+    Table table = {
+        {"", "A"},
+        {"1", "5"},
+        {"2", "=Z99+1"}
+    };
+
+    std::ostringstream err;
+    bool ok = evaluate_table(table, err);
+
+    EXPECT_FALSE(ok);
+    EXPECT_NE(err.str().find("Invalid arg1"), std::string::npos);
+}
+
