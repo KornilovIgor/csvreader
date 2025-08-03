@@ -48,3 +48,15 @@ TEST(EvaluatorTest, InvalidCellAddress) {
     EXPECT_NE(err.str().find("Invalid arg1"), std::string::npos);
 }
 
+TEST(EvaluatorTest, DetectsCycle) {
+    Table table = {
+        {"", "A", "B"},
+        {"1", "=B1+0", "=A1+0"}
+    };
+
+    std::ostringstream err;
+    bool ok = evaluate_table(table, err);
+
+    EXPECT_FALSE(ok);
+    EXPECT_NE(err.str().find("Cycle detected"), std::string::npos);
+}
