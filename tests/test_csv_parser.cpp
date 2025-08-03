@@ -1,33 +1,32 @@
 #include "csv_parser.h"
-#include "evaluator.h"
-
 #include <gtest/gtest.h>
 #include <fstream>
 
-TEST(CsvParserTest, ParseValidCsvWithoutExpr) {
-    Table table = {
-        {"", "A", "B"},
-        {"1", "10", "20"},
-        {"2", "30", "40"}
-    };
+TEST(CsvParserTest, ParsesValidCsvWithoutFormulas) {
+    std::ofstream file("simple.csv");
+    file << ",A,B\n1,10,20\n2,30,40\n";
+    file.close();
+
+    Table table;
+    std::stringstream err;
+    ASSERT_TRUE(parse_csv("simple.csv", table, err));
 
     ASSERT_EQ(table.size(), 3);
-    ASSERT_EQ(table[0].size(), 3);
+    ASSERT_EQ(table[1][1], "10");
+    ASSERT_EQ(table[2][2], "40");
 
-    EXPECT_EQ(table[1][1], "10");
-    EXPECT_EQ(table[2][2], "40");
+    std::remove("simple.csv");
 }
 
-TEST(CsvParserTest, EmptyCsvFile) {
-    std::string filename = "empty.csv";
+TEST(CsvParserTest, FailsOnInvalidColumnNames) {
+    std::ofstream file("invalid.csv");
+    file << ",A1,B2\n1,10,20\n";
+    file.close();
 
-    // Создаём пустой файл
-    std::ofstream out(filename);
-    out.close();
+    Table table;
+    std::stringstream err;
+    ASSERT_FALSE(parse_csv("invalid.csv", table, err));
+    EXPECT_TRUE(err.str().find("Invalid column name") != std::string::npos);
 
-    auto table = load_csv(filename);
-
-    EXPECT_EQ(table.size(), 0);
-
-    std::remove(filename.c_str());
+    std::remove("invalid.csv");
 }
