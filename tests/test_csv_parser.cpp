@@ -45,3 +45,38 @@ TEST(ParserTest, InconsistentColumnCount) {
     EXPECT_NE(err.str().find("Inconsistent number of columns"), std::string::npos);
     std::remove("bad_columns.csv");
 }
+
+TEST(CSVParserTest, DuplicateColumnNames) {
+    std::stringstream csv_input(
+        " ,A,B,A\n"
+        "1,2,3,4\n"
+    );
+    Table table;
+    std::stringstream err;
+
+    std::ofstream tmp("duplicate_columns.csv");
+    tmp << csv_input.str();
+    tmp.close();
+
+    EXPECT_FALSE(parse_csv("duplicate_columns.csv", table, err));
+    EXPECT_NE(err.str().find("Duplicate column name"), std::string::npos);
+    std::remove("duplicate_columns.csv");
+}
+
+TEST(CSVParserTest, DuplicateRowNumbers) {
+    std::stringstream csv_input(
+        " ,A,B\n"
+        "1,2,3\n"
+        "1,4,5\n"
+    );
+    Table table;
+    std::stringstream err;
+
+    std::ofstream tmp("duplicate_rows.csv");
+    tmp << csv_input.str();
+    tmp.close();
+
+    EXPECT_FALSE(parse_csv("duplicate_rows.csv", table, err));
+    EXPECT_NE(err.str().find("Duplicate row ID"), std::string::npos);
+    std::remove("duplicate_rows.csv");
+}
