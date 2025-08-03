@@ -2,22 +2,20 @@
 #include "evaluator.h"
 
 #include <iostream>
-#include <sstream>
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
-        std::cerr << "Usage: ./csvreader file.csv\n";
+        std::cerr <<  "Usage: " << argv[0] << " <file.csv>" << std::endl;
         return 1;
     }
 
-    std::string filename = argv[1];
+    Table table;
 
-    auto table = load_csv(filename);
+    if (!parse_csv(argv[1], table, std::cerr)) {
+        return 1;
+    }
 
-    std::ostringstream errors;
-
-    if (!evaluate_table(table, errors)) {
-        std::cerr << "Error during evaluation: " << errors.str() << std::endl;
+    if (!evaluate_table(table, std::cerr)) {
         return 1;
     }
 

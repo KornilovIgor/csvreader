@@ -51,14 +51,11 @@ int get_row_index(int row_num, const Table& table, std::unordered_map<int, int>&
     return -1;
 }
 
-
-
 bool evaluate_cell(Table& table, int row, int column,
     std::unordered_set<std::string>& visited, std::ostream& error_msg, int& result, 
     bool& error_flag, std::unordered_map<std::string, int>& column_map, 
     std::unordered_map<int, int>& row_map);
 
-//TODO: переделать шаблон чтобы колонки не могли содержать цифры
 bool parse_expression(const std::string& expr, std::string& arg1, char& op, std::string& arg2) {
     std::regex pattern(R"(^=([A-Za-z]+\d+|\d+)([+*/-])([A-Za-z]+\d+|\d+)$)");
     std::smatch matches;
