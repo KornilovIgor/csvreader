@@ -3,17 +3,9 @@
 #include <iostream>
 #include <sstream>
 #include <unordered_set>
+#include <unordered_map>
 #include <cctype>
 #include <regex>
-
-int get_column_index(const std::vector<std::string>& header, const std::string& name) {
-    for (size_t i = 1; i < header.size(); ++i) {
-        if (header[i] == name) {
-            return i;
-        }
-    }
-    return -1;
-}
 
 bool to_int(const std::string& s, int &result) {
     try  {
@@ -25,8 +17,48 @@ bool to_int(const std::string& s, int &result) {
     }
 }
 
-bool evaluate_cell(Table& table, int row, int column, std::unordered_set<std::string>& visited, std::ostream& err, int &result, bool& error);
+int get_column_index(const std::string& column_name, const std::vector<std::string>& header, std::unordered_map<std::string, int>& column_map) {
+    auto it = column_map.find(column_name);
 
+    if (it != column_map.end()) {
+        return it->second;
+    }
+
+    for (size_t i = 1; i < header.size(); ++i) {
+        if (header[i] == column_name) {
+            column_map[column_name] = static_cast<int>(i);
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+int get_row_index(int row_num, const Table& table, std::unordered_map<int, int>& row_map) {
+    auto it = row_map.find(row_num);
+    if (it != row_map.end()) {
+        return it->second;
+    }
+
+    for (size_t row = 1; row < table.size(); ++row) {
+        int row_header;
+        if (to_int(table[row][0], row_header) && row_header == row_num) {
+            row_map[row_num] = static_cast<int>(row);
+            return row;
+        }
+    }
+    row_map[row_num] = -1;
+    return -1;
+}
+
+
+
+bool evaluate_cell(Table& table, int row, int column,
+    std::unordered_set<std::string>& visited, std::ostream& error_msg, int& result, 
+    bool& error_flag, std::unordered_map<std::string, int>& column_map, 
+    std::unordered_map<int, int>& row_map);
+
+//TODO: переделать шаблон чтобы колонки не могли содержать цифры
 bool parse_expression(const std::string& expr, std::string& arg1, char& op, std::string& arg2) {
     std::regex pattern(R"(^=([A-Za-z]+\d+|\d+)([+*/-])([A-Za-z]+\d+|\d+)$)");
     std::smatch matches;
@@ -44,40 +76,40 @@ bool parse_expression(const std::string& expr, std::string& arg1, char& op, std:
 
 bool evaluate_argument(const std::string& arg, Table& table,
     const std::vector<std::string>& header, std::unordered_set<std::string>& visited,
-    std::ostream& err, bool& error, int& result) {
+    std::ostream& err_msg, bool& err_flag, int& result, std::unordered_map<std::string, int> column_map, std::unordered_map<int, int> row_map) {
 
     if (to_int(arg, result)) {
         return true;
     }
 
-    size_t i = 0;
-    while (i < arg.size() && std::isalpha(arg[i])) {
-        i++;
+    size_t index_of_start_row_num = 0;
+    while (index_of_start_row_num < arg.size() && std::isalpha(arg[index_of_start_row_num])) {
+        index_of_start_row_num++;
     }
 
-    std::string column_name = arg.substr(0, i);
-    std::string row_str = arg.substr(i);
+    std::string column_name = arg.substr(0, index_of_start_row_num);
+    std::string row_str = arg.substr(index_of_start_row_num);
 
     int row_num;
     if (!to_int(row_str, row_num)) {
         return false;
     }
 
-    int column_index = get_column_index(table[0], column_name);
+    int column_index = get_column_index(column_name, header, column_map);
     if (column_index == -1) {
         return false;
     }
 
-    for (size_t r = 1; r < table.size(); ++r) {
-        int row_header;
-        if (to_int(table[r][0], row_header) && row_header == row_num) {
-            return evaluate_cell(table, r, column_index, visited, err, result, error);
-        }
+    int row_index = get_row_index(row_num, table, row_map);
+    if (row_index == -1) {
+        return false;
     }
-    return false;
+
+
+    return evaluate_cell(table, row_index, column_index, visited, err_msg, result, err_flag, column_map, row_map);
 }
 
-bool evaluate_cell(Table& table, int row, int column, std::unordered_set<std::string>& visited, std::ostream& err, int& result, bool& error) {
+bool evaluate_cell(Table& table, int row, int column, std::unordered_set<std::string>& visited, std::ostream& error_msg, int& result, bool& error_flag, std::unordered_map<std::string, int>& column_map, std::unordered_map<int, int>& row_map) {
 
     std::string& cell = table[row][column];
 
@@ -87,54 +119,55 @@ bool evaluate_cell(Table& table, int row, int column, std::unordered_set<std::st
 
     std::string key = std::to_string(row) + "_" +std::to_string(column);
     if (visited.count(key)) {
-        err << "Cycle detected at cell: " << table[0][column] << table[row][0] << std::endl;
-        error = true;
+        error_msg << "Cycle detected at cell: " << table[0][column] << table[row][0] << std::endl;
+        error_flag = true;
         return false;
     }
     visited.insert(key);
 
-    std::string arg1, arg2;
+    std::string arg1_str, arg2_str;
     char op;
 
-    if (!parse_expression(cell, arg1, op, arg2)) {
-        err << "Invalid expression: " << cell << std::endl;
+    if (!parse_expression(cell, arg1_str, op, arg2_str)) {
+        error_msg << "Invalid expression: " << cell << std::endl;
         return false;
     }
 
-    int left, right;
-    if (!evaluate_argument(arg1, table, table[0], visited, err, error, left)) {
-        if (!error) {
-            err << "Invalid arg1: " << arg1 << std::endl;
+    //TODO: переделать в лямбда-функцию если останется время
+    int arg1, arg2;
+    if (!evaluate_argument(arg1_str, table, table[0], visited, error_msg, error_flag, arg1, column_map, row_map)) {
+        if (!error_flag) {
+            error_msg << "Invalid arg1: " << arg1_str << std::endl;
         }
         return false;
     }
 
-    if (!evaluate_argument(arg2, table, table[0], visited, err, error, right)) {
-        if (!error) {
-            err << "Invalid arg2: " << arg2 << std::endl;
+    if (!evaluate_argument(arg2_str, table, table[0], visited, error_msg, error_flag, arg2, column_map, row_map)) {
+        if (!error_flag) {
+            error_msg << "Invalid arg2: " << arg2_str << std::endl;
         }
         return false;
     }
 
     switch (op) {
         case '+':
-            result = left + right;
+            result = arg1 + arg2;
             break;
         case '-':
-            result = left - right;
+            result = arg1 - arg2;
             break;
         case '*':
-            result = left * right;
+            result = arg1 * arg2;
             break;
         case '/':
-            if (right == 0) {
-                err << "Division by zero in " << cell << std::endl;
+            if (arg2 == 0) {
+                error_msg << "Division by zero in " << cell << std::endl;
                 return false;
             }
-            result = left / right;
+            result = arg1 / arg2;
             break;
         default:
-            err << "Invalid operator: " << op << std::endl;
+            error_msg << "Invalid operator: " << op << std::endl;
             return false;
     }
 
@@ -144,16 +177,18 @@ bool evaluate_cell(Table& table, int row, int column, std::unordered_set<std::st
 }
 
 bool evaluate_table(Table& table, std::ostream& err_stream) {
-    bool error = false;
+    bool err_flag = false;
+    std::unordered_map<std::string, int> column_map;
+    std::unordered_map<int, int> row_map;
+
     for (size_t row = 1; row < table.size(); ++row) {
         for (size_t column = 1; column < table[row].size(); ++column) {
             int result;
             std::unordered_set<std::string> visited;
 
-            if (!evaluate_cell(table, row, column, visited, err_stream, result, error)) {
+            if (!evaluate_cell(table, row, column, visited, err_stream, result, err_flag, column_map, row_map)) {
                 return false;
             }
-
         }
     }
     return true;
