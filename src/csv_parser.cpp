@@ -38,7 +38,7 @@ bool parse_csv(const std::string& filename, Table& table, std::ostream& err_msg 
 
         if (table.empty()) {
             num_columns = row.size();
-            for (size_t i = 1; i <= num_columns; ++i) {
+            for (size_t i = 1; i < num_columns; ++i) {
                 if (!is_valid_column_name(row[i])) {
                     err_msg << "Error: Invalid column name: " << row[i] << std::endl;
                     return false;
