@@ -1,6 +1,8 @@
 #include "csv_parser.h"
 #include "evaluator.h"
 
+//TODO: Сделать класс-обёртку (а надо ли в такой программе?)
+
 #include <iostream>
 
 int main(int argc, char* argv[]) {
