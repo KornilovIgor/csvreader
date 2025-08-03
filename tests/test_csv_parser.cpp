@@ -30,3 +30,18 @@ TEST(CsvParserTest, FailsOnInvalidColumnNames) {
 
     std::remove("invalid.csv");
 }
+
+TEST(ParserTest, InconsistentColumnCount) {
+    std::ofstream file("bad_columns.csv");
+    file << ",A,B\n";
+    file << "1,5\n";
+    file.close();
+
+    Table table;
+    std::ostringstream err;
+    bool ok = parse_csv("bad_columns.csv", table, err);
+
+    EXPECT_FALSE(ok);
+    EXPECT_NE(err.str().find("Inconsistent number of columns"), std::string::npos);
+    std::remove("bad_columns.csv");
+}
