@@ -28,3 +28,25 @@ add_executable(parser_test
 )
 target_link_libraries(parser_test GTest::gtest_main)
 gtest_discover_tests(parser_test)
+
+find_program(CPPCHECK cppcheck)
+if (CPPCHECK)
+    set(SOURCE_DIRS 
+        ${PROJECT_SOURCE_DIR}/src 
+        ${PROJECT_SOURCE_DIR}/include
+    )
+
+    add_custom_target(
+        cppcheck
+        COMMAND ${CPPCHECK}
+            --enable=all
+            --std=c++17
+            --inconclusive
+            --suppress=missingIncludeSystem
+            -I${PROJECT_SOURCE_DIR}/include
+            ${SOURCE_DIRS}
+        COMMENT "Running cppcheck static analysis"
+    )
+else()
+    message(WARNING "cppcheck not found! Install it to enable static analysis.")
+endif()
