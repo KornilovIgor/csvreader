@@ -31,7 +31,7 @@ csvreader/
 - **Windows:** `mingw-w64` или `Cygwin`, `CMake`, `Make` или `Ninja`
 - **Общие зависимости:**
   - C++17
-  - GTest (автоматически подключается из `FetchContent` в CMake)
+  - GTest (>= 1.14)
 
 ---
 
