@@ -1,9 +1,8 @@
 #include "csv_parser.h"
 #include "evaluator.h"
 
-//TODO: Сделать класс-обёртку (а надо ли в такой программе?)
-
 #include <iostream>
+#include <unordered_map>
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
@@ -12,8 +11,10 @@ int main(int argc, char* argv[]) {
     }
 
     Table table;
+    std::unordered_map<std::string, size_t> column_map;
+    std::unordered_map<std::string, size_t> row_map;
 
-    if (!parse_csv(argv[1], table, std::cerr)) {
+    if (!parse_csv(argv[1], table, column_map, row_map, std::cerr)) {
         return 1;
     }
 

@@ -8,9 +8,11 @@ TEST(CsvParserTest, ParsesValidCsvWithoutFormulas) {
     file.close();
 
     Table table;
+    std::unordered_map<std::string, size_t> column_map;
+    std::unordered_map<std::string, size_t> row_map;
     std::stringstream err;
-    ASSERT_TRUE(parse_csv("simple.csv", table, err));
-
+    
+    ASSERT_TRUE(parse_csv("simple.csv", table, column_map, row_map, err));
     ASSERT_EQ(table.size(), 3);
     ASSERT_EQ(table[1][1], "10");
     ASSERT_EQ(table[2][2], "40");
@@ -24,8 +26,11 @@ TEST(CsvParserTest, FailsOnInvalidColumnNames) {
     file.close();
 
     Table table;
+    std::unordered_map<std::string, size_t> column_map;
+    std::unordered_map<std::string, size_t> row_map;
     std::stringstream err;
-    ASSERT_FALSE(parse_csv("invalid.csv", table, err));
+    
+    ASSERT_FALSE(parse_csv("invalid.csv", table, column_map, row_map, err));
     EXPECT_TRUE(err.str().find("Invalid column name") != std::string::npos);
 
     std::remove("invalid.csv");
@@ -38,11 +43,14 @@ TEST(ParserTest, InconsistentColumnCount) {
     file.close();
 
     Table table;
+    std::unordered_map<std::string, size_t> column_map;
+    std::unordered_map<std::string, size_t> row_map;
     std::ostringstream err;
-    bool ok = parse_csv("bad_columns.csv", table, err);
-
+    
+    bool ok = parse_csv("bad_columns.csv", table, column_map, row_map, err);
     EXPECT_FALSE(ok);
     EXPECT_NE(err.str().find("Inconsistent number of columns"), std::string::npos);
+    
     std::remove("bad_columns.csv");
 }
 
@@ -52,14 +60,17 @@ TEST(CSVParserTest, DuplicateColumnNames) {
         "1,2,3,4\n"
     );
     Table table;
+    std::unordered_map<std::string, size_t> column_map;
+    std::unordered_map<std::string, size_t> row_map;
     std::stringstream err;
 
     std::ofstream tmp("duplicate_columns.csv");
     tmp << csv_input.str();
     tmp.close();
 
-    EXPECT_FALSE(parse_csv("duplicate_columns.csv", table, err));
+    EXPECT_FALSE(parse_csv("duplicate_columns.csv", table, column_map, row_map, err));
     EXPECT_NE(err.str().find("Duplicate column name"), std::string::npos);
+    
     std::remove("duplicate_columns.csv");
 }
 
@@ -70,13 +81,16 @@ TEST(CSVParserTest, DuplicateRowNumbers) {
         "1,4,5\n"
     );
     Table table;
+    std::unordered_map<std::string, size_t> column_map;
+    std::unordered_map<std::string, size_t> row_map;
     std::stringstream err;
 
     std::ofstream tmp("duplicate_rows.csv");
     tmp << csv_input.str();
     tmp.close();
 
-    EXPECT_FALSE(parse_csv("duplicate_rows.csv", table, err));
+    EXPECT_FALSE(parse_csv("duplicate_rows.csv", table, column_map, row_map, err));
     EXPECT_NE(err.str().find("Duplicate row ID"), std::string::npos);
+    
     std::remove("duplicate_rows.csv");
 }
