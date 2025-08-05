@@ -6,15 +6,13 @@
 #include <regex>
 #include <set>
 #include <unordered_map>
+#include <algorithm>
+
+#include <algorithm> // для std::all_of
+#include <cctype>    // для std::isalpha
 
 static bool is_valid_column_name(const std::string& column_name) {
-    for (char ch : column_name) {
-        if (!std::isalpha(ch)) {
-            return false;
-        }
-    }
-
-    return true;
+    return !column_name.empty() && std::all_of(column_name.begin(), column_name.end(), [](char ch) {return std::isalpha(ch); });
 }
 
 bool parse_csv(const std::string& filename,
