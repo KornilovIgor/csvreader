@@ -21,6 +21,11 @@ bool parse_csv(const std::string& filename,
     std::unordered_map<std::string, size_t>& row_map,
     std::ostream& err_msg ){
 
+    if (filename.empty()) {
+        err_msg << "Error: Empty filename" << std::endl;
+        return false;
+    }
+
     std::ifstream file(filename);
     if (!file.is_open()) {
         err_msg << "Error: Unable to open file " << filename << std::endl;
