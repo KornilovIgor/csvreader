@@ -11,5 +11,5 @@ bool parse_csv(
     Table& table,
     std::unordered_map<std::string, size_t>& column_map,
     std::unordered_map<std::string, size_t>& row_map,
-    std::ostream& err);
+    std::ostream& err_msg);
 void print_table(const Table& table);
