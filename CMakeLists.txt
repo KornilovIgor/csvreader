@@ -10,24 +10,15 @@ include(GoogleTest)
 
 add_executable(csvreader
     src/main.cpp
-    src/csv_parser.cpp
-    src/evaluator.cpp
+    src/table.cpp
 )
 
-add_executable(evaluator_test
-    tests/evaluator_test.cpp
-    src/csv_parser.cpp
-    src/evaluator.cpp
+add_executable(table_test
+    tests/table_test.cpp
+    src/table.cpp
 )
-target_link_libraries(evaluator_test GTest::gtest_main)
-gtest_discover_tests(evaluator_test)
-
-add_executable(parser_test
-    tests/test_csv_parser.cpp
-    src/csv_parser.cpp
-)
-target_link_libraries(parser_test GTest::gtest_main)
-gtest_discover_tests(parser_test)
+target_link_libraries(table_test GTest::gtest_main)
+gtest_discover_tests(table_test)
 
 find_program(CPPCHECK cppcheck)
 if (CPPCHECK)
