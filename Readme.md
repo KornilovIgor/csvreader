@@ -9,16 +9,14 @@
 ```txt
 csvreader/
 ├── include/
-│ ├── csv_parser.h
-│ └── evaluator.h
+│   └── table.h
 ├── src/
-│ ├── main.cpp
-│ ├── csv_parser.cpp
-│ └── evaluator.cpp
+│   └── table.cpp
+│   └── main.cpp
 ├── tests/
-│ ├── test_csv_parser.cpp
-│ └── evaluator_test.cpp
-└── CMakeLists.txt
+│   └── table_test.cpp
+├── CMakeLists.txt
+└── README.md
 ```
 
 ---
@@ -58,13 +56,12 @@ cmake --build .
 
 - Программа
 ```bash
-./csvreader path_to_file.csv
+./bin/csvreader path_to_file.csv
 ```
 
 - Тесты
 ```bash
-./parser_test         # Тесты для структуры
-./evaluator_test      # Тесты для выражений
+./bin/table_test
 ```
 
 ⚙️ Кроссплатформенность
